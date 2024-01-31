@@ -12,7 +12,7 @@ class PostForm(forms.ModelForm):
         model = Post
         exclude = ('author',)
         widgets = {
-            'birthday': forms.DateInput(attrs={'type': 'date'})
+            'pub_date': forms.DateInput(attrs={'type': 'date'})
         }
 
     # def clean_first_name(self):

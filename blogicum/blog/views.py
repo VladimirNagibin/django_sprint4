@@ -1,3 +1,4 @@
+from typing import Any
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -24,17 +25,8 @@ class OnlyAuthorMixin(UserPassesTestMixin):
 class PostListView(ListView):
     model = Post
     queryset = Post.objects.get_published_posts()
-    # ordering = '-pub_date'
     paginate_by = POSTS_ON_LIST
     template_name = 'blog/index.html'
-
-
-def post_detail(request, post_id):
-    post = get_object_or_404(
-        Post.objects.get_published_posts(),
-        pk=post_id
-    )
-    return render(request, 'blog/detail.html', {'post': post})
 
 
 class PostDetailView(DetailView):
@@ -57,60 +49,6 @@ class PostDetailView(DetailView):
         return context
 
 
-def category_posts(request, category_slug):
-    category = get_object_or_404(
-        Category,
-        slug=category_slug,
-        is_published=True
-    )
-
-    post_list = category.posts.get_published_posts()
-
-    return render(
-        request,
-        'blog/category.html',
-        {'category': category, 'post_list': post_list}
-    )
-
-
-User = get_user_model()
-
-
-def profile_user(request, username):
-    profile = get_object_or_404(
-        User,
-        username=username,
-    )
-    page_obj = profile.posts.get_published_posts()
-    return render(
-        request,
-        'blog/profile.html',
-        {'profile': profile, 'page_obj': page_obj}
-    )
-
-
-class UserPostsListView(ListView):
-    model = Post
-    queryset = Post.objects.get_published_posts()
-    # ordering = '-pub_date'
-    paginate_by = POSTS_ON_LIST
-    template_name = 'blog/profile.html'
-
-    # model = User
-    # slug_url_kwarg = 'username'
-    # slug_field = 'username'
-    # template_name = 'blog/profile.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['profile'] = get_object_or_404(
-            User,
-            username=self.kwargs['username'],
-        )
-    #    context['page_obj'] = self.object.posts.get_published_posts()
-        return context
-
-
 class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     form_class = PostForm
@@ -121,16 +59,23 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-# @login_required
-# def add_comment(request, post_id):
-#    post = get_object_or_404(Post, pk=post_id)
-#    form = CommentForm(request.POST)
-#    if form.is_valid():
-#        comment = form.save(commit=False)
-#        comment.author = request.user
-#        comment.post = post
-#        comment.save()
-#    return redirect('blog:post_detail', post_id=post_id)
+class PostUpdateView(OnlyAuthorMixin, UpdateView):
+    model = Post
+    pk_url_kwarg = 'post_id'
+    template_name = 'blog/create.html'
+    form_class = PostForm
+
+
+class PostDeleteView(OnlyAuthorMixin, DeleteView):
+    model = Post
+    pk_url_kwarg = 'post_id'
+    template_name = 'blog/create.html'
+
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:profile',
+            kwargs={'username': self.request.user.username}
+        )
 
 
 class CommentCreateView(LoginRequiredMixin, CreateView):
@@ -172,3 +117,56 @@ class CommentUpdateView(CommentMixin, OnlyAuthorMixin, UpdateView):
 
 class CommentDeleteVeiw(CommentMixin, OnlyAuthorMixin, DeleteView):
     pass
+
+
+class CategoryPostsListView(ListView):
+    model = Post
+    category = None
+    paginate_by = POSTS_ON_LIST
+    template_name = 'blog/category.html'
+
+    def get_queryset(self):
+        self.category = get_object_or_404(
+            Category,
+            slug=self.kwargs['category_slug'],
+            is_published=True
+        )
+        return self.category.posts.get_published_posts()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['category'] = self.category
+        return context
+
+
+User = get_user_model()
+
+
+class UserPostsListView(ListView):
+    model = Post
+    profile = None
+    paginate_by = POSTS_ON_LIST
+    template_name = 'blog/profile.html'
+
+    def get_queryset(self):
+        self.profile = get_object_or_404(
+            User,
+            username=self.kwargs['username'],
+        )
+        if self.profile != self.request.user:
+            return Post.objects.get_published_posts().filter(
+                author=self.profile
+            )
+        return super().get_queryset().filter(author=self.profile)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['profile'] = self.profile
+        return context
+
+
+class ProfileUpdateView(UserPassesTestMixin, UpdateView):
+
+    def test_func(self):
+        object = self.get_object()
+        return object.author == self.request.user

@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models import Count
 from django.urls import reverse
 from django.utils.timezone import now
 
@@ -92,7 +93,10 @@ class Post(IsPublishedCreatedAtModel):
         return self.title[:PRESENTATION_MAX_LENGTH]
 
     def get_absolute_url(self):
-        return reverse('post:profile', kwargs={'username': self.username})
+        return reverse(
+            'blog:profile',
+            kwargs={'username': self.author.username}
+        )
 
 
 class Comment(models.Model):
