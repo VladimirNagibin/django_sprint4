@@ -2,6 +2,7 @@ from typing import Any
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db.models.base import Model as Model
 from django.db.models.query import QuerySet
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -11,7 +12,7 @@ from django.views.generic import (
 )
 
 from .constants import POSTS_ON_LIST
-from .forms import CommentForm, PostForm
+from .forms import CommentForm, PostForm, ProfileForm
 from .models import Category, Comment, Post
 
 
@@ -165,8 +166,16 @@ class UserPostsListView(ListView):
         return context
 
 
-class ProfileUpdateView(UserPassesTestMixin, UpdateView):
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+    model = User
+    form_class = ProfileForm
+    template_name = 'blog/user.html'
 
-    def test_func(self):
-        object = self.get_object()
-        return object.author == self.request.user
+    def get_object(self):
+        return self.request.user
+
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:profile',
+            kwargs={'username': self.request.user.username}
+        )
