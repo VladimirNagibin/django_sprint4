@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 
 
-from .models import Post
+from .models import Comment, Post
 
 
 class PostForm(forms.ModelForm):
@@ -35,3 +35,10 @@ class PostForm(forms.ModelForm):
     #        raise ValidationError(
     #            'Мы тоже любим Битлз, но введите, пожалуйста, настоящее имя!'
     #        )
+
+
+class CommentForm(forms.ModelForm):
+
+    class Meta:
+        model = Comment
+        fields = ('text',)

@@ -100,11 +100,17 @@ class Comment(models.Model):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
-        related_name='posts',
         verbose_name='Пост',
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField('Добавлено', auto_now_add=True)
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор комментария',
+    )
 
     class Meta:
         ordering = ('created_at',)
+        default_related_name = 'comments'
+        verbose_name = 'комментарий'
+        verbose_name_plural = 'Комментарии'
