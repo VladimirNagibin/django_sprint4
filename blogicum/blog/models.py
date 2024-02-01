@@ -42,6 +42,11 @@ class Location(IsPublishedCreatedAtModel):
 
 
 class PublishedManager(models.QuerySet):
+    def get_posts(self):
+        return self.select_related(
+            'category', 'location', 'author'
+        ).annotate(comment_count=Count('comments')).order_by('-pub_date')
+
     def get_published_posts(self):
         return self.select_related(
             'category', 'location', 'author'
@@ -49,7 +54,7 @@ class PublishedManager(models.QuerySet):
             is_published=True,
             pub_date__lte=now(),
             category__is_published=True
-        )
+        ).annotate(comment_count=Count('comments')).order_by('-pub_date')
 
 
 class Post(IsPublishedCreatedAtModel):
@@ -118,3 +123,12 @@ class Comment(models.Model):
         default_related_name = 'comments'
         verbose_name = 'комментарий'
         verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return self.text[:PRESENTATION_MAX_LENGTH]
+
+    def get_absolute_url(self):
+        return reverse(
+            'blog:post_detail',
+            kwargs={'post_id': self.post.id}
+        )

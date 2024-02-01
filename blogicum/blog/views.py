@@ -1,12 +1,7 @@
-from typing import Any
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.db.models.base import Model as Model
-from django.db.models.query import QuerySet
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse, reverse_lazy
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse_lazy
 from django.views.generic import (
     CreateView, DeleteView, DetailView, ListView, UpdateView
 )
@@ -25,6 +20,7 @@ class OnlyAuthorMixin(UserPassesTestMixin):
 
 class PostListView(ListView):
     model = Post
+    ordering = '-pub_date'
     queryset = Post.objects.get_published_posts()
     paginate_by = POSTS_ON_LIST
     template_name = 'blog/index.html'
@@ -36,6 +32,11 @@ class PostDetailView(DetailView):
     template_name = 'blog/detail.html'
 
     def get_object(self):
+        if self.request.user.id == super().get_object().author_id:
+            return get_object_or_404(
+                Post.objects.get_posts(),
+                pk=self.kwargs['post_id']
+            )
         return get_object_or_404(
             Post.objects.get_published_posts(),
             pk=self.kwargs['post_id']
@@ -66,6 +67,12 @@ class PostUpdateView(OnlyAuthorMixin, UpdateView):
     template_name = 'blog/create.html'
     form_class = PostForm
 
+    def handle_no_permission(self):
+        return redirect(
+            'blog:post_detail',
+            post_id=self.kwargs['post_id']
+        )
+
 
 class PostDeleteView(OnlyAuthorMixin, DeleteView):
     model = Post
@@ -93,31 +100,23 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         form.instance.post = self.post_for_comment
         return super().form_valid(form)
 
-    def get_success_url(self):
-        return reverse(
-            'blog:post_detail',
-            kwargs={'post_id': self.post_for_comment.pk}
-        )
 
-
-class CommentMixin:
+class CommentMixin(OnlyAuthorMixin):
     model = Comment
     pk_url_kwarg = 'comment_id'
     template_name = 'blog/comment.html'
 
+
+class CommentUpdateView(CommentMixin, UpdateView):
+    form_class = CommentForm
+
+
+class CommentDeleteVeiw(CommentMixin, OnlyAuthorMixin, DeleteView):
     def get_success_url(self):
         return reverse_lazy(
             'blog:post_detail',
             kwargs={'post_id': self.kwargs['post_id']}
         )
-
-
-class CommentUpdateView(CommentMixin, OnlyAuthorMixin, UpdateView):
-    form_class = CommentForm
-
-
-class CommentDeleteVeiw(CommentMixin, OnlyAuthorMixin, DeleteView):
-    pass
 
 
 class CategoryPostsListView(ListView):
@@ -155,10 +154,8 @@ class UserPostsListView(ListView):
             username=self.kwargs['username'],
         )
         if self.profile != self.request.user:
-            return Post.objects.get_published_posts().filter(
-                author=self.profile
-            )
-        return super().get_queryset().filter(author=self.profile)
+            return self.profile.posts.get_published_posts()
+        return self.profile.posts.get_posts()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

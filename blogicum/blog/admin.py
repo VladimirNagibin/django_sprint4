@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group, User
 
-from .models import Category, Location, Post
+from .models import Category, Comment, Location, Post
 
 
 class PostInline(admin.TabularInline):
@@ -72,3 +72,6 @@ class UserAdmin(BaseUserAdmin):
     @admin.display(description='Кол-во постов у пользователя')
     def posts_count(self, obj):
         return obj.posts.count()
+
+
+admin.site.register(Comment)
