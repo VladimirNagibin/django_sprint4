@@ -61,11 +61,10 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class PostUpdateView(OnlyAuthorMixin, UpdateView):
+class PostMixin(OnlyAuthorMixin):
     model = Post
     pk_url_kwarg = 'post_id'
     template_name = 'blog/create.html'
-    form_class = PostForm
 
     def handle_no_permission(self):
         return redirect(
@@ -74,10 +73,17 @@ class PostUpdateView(OnlyAuthorMixin, UpdateView):
         )
 
 
-class PostDeleteView(OnlyAuthorMixin, DeleteView):
-    model = Post
-    pk_url_kwarg = 'post_id'
-    template_name = 'blog/create.html'
+class PostUpdateView(PostMixin, UpdateView):
+    form_class = PostForm
+
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:post_detail',
+            kwargs={'post_id': self.kwargs['post_id']}
+        )
+
+
+class PostDeleteView(PostMixin, DeleteView):
 
     def get_success_url(self):
         return reverse_lazy(
