@@ -20,7 +20,6 @@ class OnlyAuthorMixin(UserPassesTestMixin):
 
 class PostListView(ListView):
     model = Post
-    ordering = '-pub_date'
     queryset = Post.objects.get_published_posts()
     paginate_by = POSTS_ON_LIST
     template_name = 'blog/index.html'
@@ -61,7 +60,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class PostMixin(OnlyAuthorMixin):
+class PostUpdateDeleteMixin(OnlyAuthorMixin):
     model = Post
     pk_url_kwarg = 'post_id'
     template_name = 'blog/create.html'
@@ -73,7 +72,7 @@ class PostMixin(OnlyAuthorMixin):
         )
 
 
-class PostUpdateView(PostMixin, UpdateView):
+class PostUpdateView(PostUpdateDeleteMixin, UpdateView):
     form_class = PostForm
 
     def get_success_url(self):
@@ -83,7 +82,7 @@ class PostUpdateView(PostMixin, UpdateView):
         )
 
 
-class PostDeleteView(PostMixin, DeleteView):
+class PostDeleteView(PostUpdateDeleteMixin, DeleteView):
 
     def get_success_url(self):
         return reverse_lazy(
@@ -96,6 +95,7 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     post_for_comment = None
     model = Comment
     form_class = CommentForm
+    template_name = 'blog/detail.html'
 
     def dispatch(self, request, *args, **kwargs):
         self.post_for_comment = get_object_or_404(Post, pk=kwargs['post_id'])
@@ -106,18 +106,23 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         form.instance.post = self.post_for_comment
         return super().form_valid(form)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['post'] = self.post_for_comment
+        return context
 
-class CommentMixin(OnlyAuthorMixin):
+
+class CommentUpdateDeleteMixin(OnlyAuthorMixin):
     model = Comment
     pk_url_kwarg = 'comment_id'
     template_name = 'blog/comment.html'
 
 
-class CommentUpdateView(CommentMixin, UpdateView):
+class CommentUpdateView(CommentUpdateDeleteMixin, UpdateView):
     form_class = CommentForm
 
 
-class CommentDeleteVeiw(CommentMixin, OnlyAuthorMixin, DeleteView):
+class CommentDeleteVeiw(CommentUpdateDeleteMixin, DeleteView):
     def get_success_url(self):
         return reverse_lazy(
             'blog:post_detail',
