@@ -6,8 +6,9 @@ from .models import Comment, Post, User
 
 
 class PostForm(forms.ModelForm):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['pub_date'].initial = now
 
     class Meta:
         model = Post
