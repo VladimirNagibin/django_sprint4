@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group, User
+from django.utils.safestring import mark_safe
 
 from .models import Category, Comment, Location, Post
 
@@ -42,7 +43,8 @@ class PostAdmin(admin.ModelAdmin):
         'author',
         'location',
         'pub_date',
-        'is_published'
+        'is_published',
+        'image_of_post'
     )
     list_editable = ('is_published', 'pub_date')
     search_fields = ('title', 'text')
@@ -52,6 +54,14 @@ class PostAdmin(admin.ModelAdmin):
         'author',
         'location'
     )
+
+    @admin.display(description='Фото')
+    def image_of_post(self, obj):
+        if obj.image:
+            return mark_safe(
+                f'<img src={obj.image.url} width="80" height="60">'
+            )
+        return None
 
 
 admin.site.unregister(Group)
@@ -66,6 +76,7 @@ class UserAdmin(BaseUserAdmin):
         'first_name',
         'last_name',
         'posts_count',
+        'comments_count',
         'is_staff'
     )
 
@@ -73,5 +84,17 @@ class UserAdmin(BaseUserAdmin):
     def posts_count(self, obj):
         return obj.posts.count()
 
+    @admin.display(description='Кол-во комментов у пользователя')
+    def comments_count(self, obj):
+        return obj.comments.count()
 
-admin.site.register(Comment)
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = (
+        'text',
+        'post',
+        'author'
+    )
+    search_fields = ('text',)
+    list_filter = ('author', 'post')

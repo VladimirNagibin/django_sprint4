@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 
 from .constants import TITLE_MAX_LENGTH, PRESENTATION_MAX_LENGTH
-from core.models import IsPublishedCreatedAtModel
+from core.models import CreatedAtModel, IsPublishedCreatedAtModel
 
 User = get_user_model()
 
@@ -104,22 +104,20 @@ class Post(IsPublishedCreatedAtModel):
         )
 
 
-class Comment(models.Model):
+class Comment(CreatedAtModel):
     text = models.TextField('Комментарий')
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
         verbose_name='Пост',
     )
-    created_at = models.DateTimeField('Добавлено', auto_now_add=True)
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор комментария',
     )
 
-    class Meta:
-        ordering = ('created_at',)
+    class Meta(CreatedAtModel.Meta):
         default_related_name = 'comments'
         verbose_name = 'комментарий'
         verbose_name_plural = 'Комментарии'

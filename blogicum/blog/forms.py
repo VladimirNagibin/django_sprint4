@@ -1,11 +1,13 @@
 from django import forms
-from django.contrib.auth import get_user_model
+from django.utils.timezone import now
 
 from .constants import ROWS_TEXTAREA
-from .models import Comment, Post
+from .models import Comment, Post, User
 
 
 class PostForm(forms.ModelForm):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     class Meta:
         model = Post
@@ -27,9 +29,6 @@ class CommentForm(forms.ModelForm):
         widgets = {
             'text': forms.Textarea({'rows': ROWS_TEXTAREA})
         }
-
-
-User = get_user_model()
 
 
 class ProfileForm(forms.ModelForm):
