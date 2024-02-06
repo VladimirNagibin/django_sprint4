@@ -52,20 +52,6 @@ class PublishedManager(models.QuerySet):
     def get_posts_comment_count(self):
         return self.select_related(
             'category', 'location', 'author'
-        ).annotate(comment_count=Count('comments'))
-
-    def get_posts(self):
-        return self.select_related(
-            'category', 'location', 'author'
-        ).annotate(comment_count=Count('comments')).order_by('-pub_date')
-
-    def get_published_posts(self):
-        return self.select_related(
-            'category', 'location', 'author'
-        ).filter(
-            is_published=True,
-            pub_date__lte=now(),
-            category__is_published=True
         ).annotate(comment_count=Count('comments')).order_by('-pub_date')
 
 
@@ -130,7 +116,6 @@ class Comment(CreatedAtModel):
     )
 
     class Meta(CreatedAtModel.Meta):
-        ordering = ('created_at',)
         default_related_name = 'comments'
         verbose_name = 'комментарий'
         verbose_name_plural = 'Комментарии'

@@ -2,8 +2,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 
-from .forms import PostForm
-from .models import Post
+from .forms import CommentForm, PostForm
+from .models import Comment, Post
 
 
 class OnlyAuthorMixin(UserPassesTestMixin):
@@ -12,7 +12,7 @@ class OnlyAuthorMixin(UserPassesTestMixin):
         return self.get_object().author == self.request.user
 
 
-class PostUpdateDeleteMixin(OnlyAuthorMixin, LoginRequiredMixin):
+class PostMixin(OnlyAuthorMixin, LoginRequiredMixin):
     model = Post
     pk_url_kwarg = 'post_id'
     template_name = 'blog/create.html'
@@ -30,7 +30,15 @@ class PostUpdateDeleteMixin(OnlyAuthorMixin, LoginRequiredMixin):
             kwargs={'username': self.request.user.username}
         )
 
-    #def get_context_data(self, **kwargs):
-    #    context = super().get_context_data(**kwargs)
-    #    context['form'] = PostForm
-    #    return context
+
+class CommentMixin(LoginRequiredMixin):
+    model = Comment
+    pk_url_kwarg = 'comment_id'
+    template_name = 'blog/comment.html'
+    form_class = CommentForm
+
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:post_detail',
+            kwargs={'post_id': self.kwargs['post_id']}
+        )
