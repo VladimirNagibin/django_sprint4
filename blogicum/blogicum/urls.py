@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from .views import UserCreateView
+from blog.views import UserCreateView
 
 urlpatterns = [
     path('admin/',
