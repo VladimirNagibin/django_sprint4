@@ -1,7 +1,7 @@
 ### Проект Blogicum  
 
 ## Описание
-Blogicum - 
+Blogicum - сайт для публикаций постов, для которых определены категории и опционально расположение. Зарегестрированные пользователи могут комментировать чужие посты. 
 
 ## Используемые технологии:
 
@@ -20,30 +20,34 @@ git clone https://github.com/VladimirNagibin/django_sprint4.git
 ```
 
 ```
-cd api_yamdb
+cd django_sprint4
 ```
 
 Cоздать и активировать виртуальное окружение:
 
 ```
-python -m venv venv
+python3.9 -m venv venv
 ```
 
 ```
-source venv/Scripts/activate
+source venv/bin/activate
 ```
 
 Установить пакетный менеджер и зависимости из файла requirements.txt:
 
 ```
-python -m pip install --upgrade pip
+pip install --upgrade pip
 ```
 
 ```
 pip install -r requirements.txt
 ```
 
-Выполнить миграции:
+Перейти в рабочую папку и выполнить миграции:
+
+```
+cd blogicum/
+```
 
 ```
 python manage.py migrate
@@ -60,4 +64,3 @@ python manage.py loaddata db.json
 ```
 python manage.py runserver
 ```
-
