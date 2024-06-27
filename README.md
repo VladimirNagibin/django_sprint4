@@ -65,6 +65,8 @@ python manage.py loaddata db.json
 python manage.py runserver
 ```
 
+В корень проекта нужно поместить файл .env  со значением SECRET_KEY= секретный ключ Django
+
 Сайт будет доступен по адресу http://127.0.0.1:8000/
 
 ____
